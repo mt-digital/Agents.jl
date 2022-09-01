@@ -81,7 +81,7 @@ end
 function parallel_ensemble(models, agent_step!, model_step!, n, batch_size; kwargs...)
     all_data = pmap(
         j -> run!(models[j], agent_step!, model_step!, n; kwargs...),
-        1:length(models);
+        collect(1:length(models));
         batch_size = batch_size
     )
 
