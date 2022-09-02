@@ -438,7 +438,12 @@ function _add_col_data!(
     obtainer = identity,
 ) where {T,K,A,C}
     k, agg, condition = property
-    res::T = agg(get_data(a, k, obtainer) for a in Iterators.filter(condition, agent_iter))
+    agents_iterator = Iterators.filter(condition, agent_iter)
+    if !isempty(agents_iterator)
+        res::T = agg(get_data(a, k, obtainer) for a in agents_iterator)
+    else
+        res = NaN
+    end
     push!(col, res)
 end
 
