@@ -632,3 +632,38 @@ end
     @test adf[!, :sum_p] == unique(adf[!, :sum_p])
     @test sort!(adf[:, :ensemble]) == [1, 1, 1, 2, 2, 2, 3, 3, 3]
 end
+
+@testset "Conditional data collection" begin
+
+    mutable struct CondCollAgent <: AbstractAgent
+        id::Int
+        age::Int
+        funds::Float64
+    end
+
+    m = ABM(CondCollAgent)
+    agents = [CondCollAgent(age, age, 10.0) for age in 1:3]
+    for a in agents 
+        add_agent!(a, m)
+    end
+
+    function agent_step!(agent, model)
+        agent.age += 1 
+    end
+
+    is_old(a) = a.age > 3
+    is_youngish(a) = a.age ≤ 3
+    is_young(a) = a.age < 3
+    is_not_baby(a) = a.age > 0
+
+    adata = [(:funds, sum, is_old), (:funds, sum, is_youngish), 
+             (:funds, sum, is_young), (:funds, sum, is_not_baby)]
+
+    adf, _ = run!(m, agent_step!, 3; adata)
+
+    @test isequal(adf.sum_funds_is_old, [NaN, 10., 20., 30.])
+    @test isequal(adf.sum_funds_is_youngish, [30.0, 20.0, 10., NaN])
+    @test isequal(adf.sum_funds_is_young, [20.0, 10.0, NaN, NaN])
+    @test isequal(adf.sum_funds_is_not_baby, [30.0, 30.0, 30.0, 30.0])
+
+end
